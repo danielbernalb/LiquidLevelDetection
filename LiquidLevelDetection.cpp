@@ -37,7 +37,7 @@ float LiquidLevelDetection::getRange() {
 float LiquidLevelDetection::getEmptyHeight() {
     float val = readModbusRegister(0x0001);
     if (val < 0) return -1.0; // Retorna -1.0 si hubo error de lectura/CRC
-    return val / 1000.0;
+    return val;
 }
 
 bool LiquidLevelDetection::setInstallationHeight(float height_cm) {
@@ -53,7 +53,7 @@ float LiquidLevelDetection::getInstallationHeight() {
 float LiquidLevelDetection::getWaterLevel() {
     float val = readModbusRegister(0x0003);
     if (val < 0) return -1.0;
-    return val / 1000.0;
+    return val;
 }
 
 bool LiquidLevelDetection::sendModbusCommand(uint16_t reg_addr, uint16_t value) {
