@@ -2,12 +2,17 @@
 #define LIQUID_LEVEL_DETECTION_H
 
 #include <Arduino.h>
+
+// Si es un ESP8266, necesitamos incluir la librería de SoftwareSerial
+#if defined(ESP8266)
 #include <SoftwareSerial.h>
+#endif
 
 class LiquidLevelDetection {
 public:
-    // Constructor: Initialize RX, TX pins and device address of the sensor
+    // El constructor se mantiene idéntico para que tu archivo principal no cambie
     LiquidLevelDetection(uint8_t rx_pin, uint8_t tx_pin, uint8_t device_addr = 0x01);
+    ~LiquidLevelDetection(); // Destructor para liberar memoria en el ESP8266
     
     // Initialize sensor communication, set baudrate
     bool begin(long baudrate = 115200);
@@ -28,13 +33,20 @@ public:
     float getWaterLevel();
 
 private:
-    SoftwareSerial* _serial;
+    uint8_t _rx_pin;
+    uint8_t _tx_pin;
     uint8_t _device_addr;
+
+    // Aquí ocurre la magia: El tipo de puntero cambia según la arquitectura de la placa
+    #if defined(ESP32)
+    HardwareSerial* _serial;
+    #elif defined(ESP8266)
+    SoftwareSerial* _serial;
+    #endif
     
-    // Modbus functions
     bool sendModbusCommand(uint16_t reg_addr, uint16_t value);
     float readModbusRegister(uint16_t reg_addr);
     uint16_t calculateCRC16(uint8_t* buffer, uint8_t length);
 };
 
-#endif 
+#endif

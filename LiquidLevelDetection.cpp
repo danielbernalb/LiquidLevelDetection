@@ -1,12 +1,32 @@
 #include "LiquidLevelDetection.h"
 
 LiquidLevelDetection::LiquidLevelDetection(uint8_t rx_pin, uint8_t tx_pin, uint8_t device_addr) {
-    _serial = new SoftwareSerial(rx_pin, tx_pin);
+    _rx_pin = rx_pin;
+    _tx_pin = tx_pin;
     _device_addr = device_addr;
+
+    #if defined(ESP32)
+    _serial = &Serial1; // En ESP32 usamos el puerto nativo de Hardware Serial1
+    #elif defined(ESP8266)
+    _serial = new SoftwareSerial(_rx_pin, _tx_pin); // En ESP8266 creamos un puerto virtual
+    #endif
+}
+
+LiquidLevelDetection::~LiquidLevelDetection() {
+    #if defined(ESP8266)
+    if (_serial != nullptr) {
+        delete _serial; // Liberamos memoria solo si se creó el objeto virtual en ESP8266
+    }
+    #endif
 }
 
 bool LiquidLevelDetection::begin(long baudrate) {
+    #if defined(ESP32)
+    // En el ESP32 iniciamos el HardwareSerial asignándole los pines elegidos dinámicamente
+    _serial->begin(baudrate, SERIAL_8N1, _rx_pin, _tx_pin);
+    #elif defined(ESP8266)
     _serial->begin(baudrate);
+    #endif
     return true;
 }
 
