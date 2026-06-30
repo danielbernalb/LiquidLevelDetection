@@ -3,33 +3,46 @@
 
 #include <Arduino.h>
 
-// Si es un ESP8266, necesitamos incluir la librería de SoftwareSerial
 #if defined(ESP8266)
 #include <SoftwareSerial.h>
 #endif
 
 class LiquidLevelDetection {
 public:
-    // El constructor se mantiene idéntico para que tu archivo principal no cambie
-    LiquidLevelDetection(uint8_t rx_pin, uint8_t tx_pin, uint8_t device_addr = 0x01);
-    ~LiquidLevelDetection(); // Destructor para liberar memoria en el ESP8266
-    
-    // Initialize sensor communication, set baudrate
-    bool begin(long baudrate = 115200);
-    
-    // Get current range (unit: meter)
+
+    // ── Constructor ──────────────────────────────────────────────────────────
+    // ESP32: acepta un puntero al puerto hardware (Serial1 por defecto, puede
+    //        pasarse &Serial2 si Serial1 está ocupado)
+    // ESP8266: solo necesita los pines RX/TX para crear el SoftwareSerial
+    #if defined(ESP32)
+    LiquidLevelDetection(uint8_t rx_pin, uint8_t tx_pin,
+                         uint8_t device_addr = 0x01,
+                         HardwareSerial* serial_port = &Serial1);
+    #elif defined(ESP8266)
+    LiquidLevelDetection(uint8_t rx_pin, uint8_t tx_pin,
+                         uint8_t device_addr = 0x01);
+    #endif
+
+    ~LiquidLevelDetection();
+
+    // ── API pública ──────────────────────────────────────────────────────────
+    // Inicializa la comunicación. En ESP8266 usar máximo 9600 baud.
+    bool begin(long baudrate = 9600);
+
+    // Rango máximo configurado (unidad: metro). Retorna -1.0 si hay error.
     float getRange();
-    
-    // Get empty height (distance from sensor to liquid surface, unit: meter)
+
+    // Distancia del sensor a la superficie del líquido (unidad: metro).
+    // Retorna -1.0 si hay error de comunicación o CRC.
     float getEmptyHeight();
-    
-    // Set installation height (unit: centimeter)
+
+    // Escribe la altura de instalación en el sensor (unidad: centímetro).
     bool setInstallationHeight(float height_cm);
-    
-    // Get installation height (return unit: meter)
+
+    // Altura de instalación configurada (unidad: metro). Retorna -1.0 si hay error.
     float getInstallationHeight();
-    
-    // Get water level height (unit: meter)
+
+    // Nivel de agua (unidad: metro). Retorna -1.0 si hay error.
     float getWaterLevel();
 
 private:
@@ -37,16 +50,17 @@ private:
     uint8_t _tx_pin;
     uint8_t _device_addr;
 
-    // Aquí ocurre la magia: El tipo de puntero cambia según la arquitectura de la placa
+    // Puntero al puerto serial: hardware en ESP32, virtual en ESP8266
     #if defined(ESP32)
     HardwareSerial* _serial;
     #elif defined(ESP8266)
     SoftwareSerial* _serial;
     #endif
-    
-    bool sendModbusCommand(uint16_t reg_addr, uint16_t value);
-    float readModbusRegister(uint16_t reg_addr);
+
+    // ── Modbus internals ─────────────────────────────────────────────────────
+    bool     sendModbusCommand(uint16_t reg_addr, uint16_t value);
+    float    readModbusRegister(uint16_t reg_addr);
     uint16_t calculateCRC16(uint8_t* buffer, uint8_t length);
 };
 
-#endif
+#endif // LIQUID_LEVEL_DETECTION_H

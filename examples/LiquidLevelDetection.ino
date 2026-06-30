@@ -67,6 +67,7 @@ void loop() {
     } else {
         Serial.println("Reading Error");
     }
+    delay(5);
     
     // Read empty height (distance from sensor to liquid surface)
     float emptyHeight = sensor.getEmptyHeight();
@@ -78,6 +79,7 @@ void loop() {
     } else {
         Serial.println("Reading Error");
     }
+    delay(5);
     
     // Read water level height
     float waterLevel = sensor.getWaterLevel();
@@ -89,7 +91,6 @@ void loop() {
     } else {
         Serial.println("Reading Error");
     }
-    
     Serial.println("------------------------");
-    delay(3000);  // Update every 3 seconds
+    delay(1000);  // Update every 3 seconds
 }
